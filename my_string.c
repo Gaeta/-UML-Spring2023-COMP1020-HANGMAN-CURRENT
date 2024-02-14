@@ -2,6 +2,7 @@
 #include <ctype.h> // for isspace
 #include <stdio.h> // for fgetc, ungetc, and fwrite 
 #include <stdlib.h> // for malloc, free, and realloc
+#include <stdbool.h> // for bool, true, and false   
 #include "my_string.h"
 
 
@@ -139,3 +140,129 @@ Status my_string_insertion(MY_STRING hMy_string, FILE* fp) {
     
     return SUCCESS;
 }
+
+Status my_string_push_back(MY_STRING hMy_string, char item){
+    My_string* pMy_string = (My_string*)hMy_string;
+    char* pTemp;
+    int i;
+    if(hMy_string == NULL){
+        return FAILURE;
+    }
+
+    if(pMy_string->size >= pMy_string->capacity){
+        pTemp = (char*)malloc(sizeof(char) * pMy_string->capacity * 2);
+        if (pTemp == NULL){
+            printf("Failed to resize for push_back.\n");
+            return FAILURE;
+        }
+        for(i = 0; i < pMy_string->size; i++){
+            pTemp[i] = pMy_string->data[i];
+        }
+        free(pMy_string->data);
+        pMy_string->data = pTemp;
+        pMy_string->capacity *= 2;
+    }
+    pMy_string->data[pMy_string->size] = item;
+    pMy_string->size++;
+    return SUCCESS;
+}
+
+Status my_string_pop_back(MY_STRING hMy_string){
+    My_string* pMy_string = (My_string*)hMy_string;
+  
+    if(hMy_string == NULL){
+        return FAILURE;
+    }
+
+    if(pMy_string->size <= 0){
+        return FAILURE;
+    }
+    pMy_string->size--;
+    pMy_string->data[pMy_string->size] = '\0';
+    return SUCCESS;
+}
+
+char* my_string_at(MY_STRING hMy_string, int index){
+    My_string* pMy_string = (My_string*)hMy_string;
+
+    if(hMy_string == NULL){
+        return NULL;
+    }
+
+    if(index < 0 || index >= pMy_string->size){
+        return NULL;
+    }
+
+    return &(pMy_string->data[index]);
+}
+
+char* my_string_c_str(MY_STRING hMy_string){
+    My_string* pMy_string = (My_string*) hMy_string;
+    char* pTemp;
+    int i;
+
+    if(hMy_string == NULL){
+        return NULL;
+    }
+    if(pMy_string->size >= pMy_string->capacity){
+        pTemp = (char*)malloc(sizeof(char) * pMy_string->capacity + 1);
+        if(pTemp == NULL){
+            printf("Failed to make space for c_str.\n");
+            return NULL;
+        }
+        for(i = 0; i < pMy_string->size; i++){
+            pTemp[i] = pMy_string->data[i];
+        }
+        free(pMy_string->data);
+        pMy_string->data = pTemp;
+        pMy_string->capacity ++;
+    }
+
+    pMy_string->data[pMy_string->size] = '\0';
+    return pMy_string->data;
+}
+
+Status my_string_concat(MY_STRING hResult, MY_STRING hAppend){
+    My_string* pResult = (My_string*)hResult;
+    My_string* pAppend = (My_string*)hAppend;
+
+    if(hResult == NULL || hAppend == NULL){
+        return FAILURE;
+    }
+
+    char* pTemp;
+    int i;
+    int combined_capacity = pResult->capacity + pAppend->capacity;
+
+    if((pResult->size + pAppend->size) >= pResult->capacity){
+        pTemp = malloc(sizeof(char) * combined_capacity * 2);
+        if(pTemp == NULL){
+            return FAILURE;
+        }
+        for(i = 0; i < pResult->size; i++){
+            pTemp[i] = pResult->data[i];
+        }
+        free(pResult->data);
+        pResult->data = pTemp;
+        pResult->capacity = combined_capacity * 2;
+    }
+
+    for(i = pResult->size; i < (pResult->size + pAppend->size); i++){
+        pResult->data[i] = pAppend->data[i - pResult->size];
+    }
+    pResult->size += pAppend->size;
+
+    return SUCCESS;
+}
+
+bool my_string_empty(MY_STRING hMy_string){
+    My_string* pMy_string = (My_string*)hMy_string;
+
+    if(pMy_string->size == 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+

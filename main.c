@@ -1,122 +1,45 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "my_string.h"
-
-/** 
- * This is the test cases for my_string_push_back,my_string_pop_back,my_string_at, my_string_c_str, my_string_concat,my_string_empty
- * 
- * String: Hello World
- * use the other file for the test cases for my_string_init_default, my_string_destroy, my_string_get_size, my_string_extraction, my_string_insertion,
- * 
- * The test cases should be for each individual function
-*/
-
-// Test case for my_string_push_back
-void test_my_string_push_back() {
-    MY_STRING str = my_string_init_default();
-
-    my_string_push_back(str, 'H');
-    my_string_push_back(str, 'e');
-    my_string_push_back(str, 'l');
-    my_string_push_back(str, 'l');
-    my_string_push_back(str, 'o');
-    my_string_push_back(str, ' '); 
-    my_string_push_back(str, 'W');
-    my_string_push_back(str, 'o');
-    my_string_push_back(str, 'r');
-    my_string_push_back(str, 'l');
-    my_string_push_back(str, 'd');
-
-    printf("String after push_back: %s\n", my_string_c_str(str));
-
-    my_string_destroy(&str);
-}
-
-// Test case for my_string_pop_back
-void test_my_string_pop_back() {
-    MY_STRING str = my_string_init_c_string("Hello World");
-
-    printf("String before pop_back: %s\n", my_string_c_str(str));
-
-    my_string_pop_back(str);
-
-    printf("String after pop_back: %s\n", my_string_c_str(str));
-
-    my_string_destroy(&str);
-}
-
-// Test case for my_string_at
-void test_my_string_at() {
-    MY_STRING str = my_string_init_c_string("Hello World");
-
-    printf("Character at index 0: %s\n", my_string_at(str, 0));
-    printf("Character at index 2: %s\n", my_string_at(str, 2));
-    printf("Character at index 4: %s\n", my_string_at(str, 4));
-
-    my_string_destroy(&str);
-}
-
-// Test case for my_string_c_str
-void test_my_string_c_str() {
-    MY_STRING str = my_string_init_c_string("Hello World");
-
-    const char* c_str = my_string_c_str(str);
-
-    printf("C string: %s\n", c_str);
-
-    my_string_destroy(&str);
-}
-
-// Test case for my_string_concat
-void test_my_string_concat() {
-    MY_STRING str1 = my_string_init_c_string("Hello World 1");
-    MY_STRING str2 = my_string_init_c_string("Hello World 2");
-
-    my_string_concat(str1, str2);
-
-    printf("Concatenated string: %s\n", my_string_c_str(str1));
-
-    my_string_destroy(&str1);
-    my_string_destroy(&str2);
-}
-
-// Test case for my_string_empty
-void test_my_string_empty() {
-    MY_STRING str = my_string_init_c_string("Hello World");
-
-    printf("Is string empty? %s\n", my_string_empty(str) ? "Yes" : "No");
-
-    // Empty entire string
-    while (my_string_get_size(str) > 0) {
-        printf("Deleted character: %s\n", my_string_at(str, my_string_get_size(str) - 1));
-        my_string_pop_back(str);
-    }
-
-    printf("Is string empty? %s\n", my_string_empty(str) ? "Yes" : "No");
-
-    my_string_destroy(&str);
-}
+#include <stdio.h>
 
 int main() {
-    printf("***** Push Back Test *****\n");
-    test_my_string_push_back();
+    MY_STRING string_array[100]; // Create an array of MY_STRING handles
+    int i;
 
-    printf("\n***** Pop Back Test *****\n");
-    test_my_string_pop_back();
+    // Initialize each element to NULL
+    for (i = 0; i < 100; i++) {
+        string_array[i] = NULL;
+    }
 
-    printf("\n***** String At Test *****\n");
-    test_my_string_at();
+    // Initialize the first element to "COPY ME!"
+    string_array[0] = my_string_init_c_string("COPY ME!");
 
-    printf("\n***** C Str Test *****\n");
-    test_my_string_c_str();
+    // Use init_copy function to copy the first string into every other element of the array
+    for (i = 1; i < 100; i++) {
+        string_array[i] = my_string_init_copy(string_array[0]);
+    }
 
-    printf("\n***** Concat Test *****\n");
-    test_my_string_concat();
+    // Destroy the object in the index 0 position and reinitialize it to "FIRST FIFTY!"
+    my_string_destroy(&string_array[0]);
+    string_array[0] = my_string_init_c_string("FIRST FIFTY!");
 
-    printf("\n***** Empty Test *****\n");
-    test_my_string_empty();
+    // Use my_string_assignment to copy the value of the first array element into the first fifty elements of the array (0-49)
+    for (i = 1; i < 50; i++) {
+        my_string_assignment(&string_array[i], string_array[0]);
+    }
 
-    printf("*****End of test cases\n");
+    // Use my_string_swap to swap the values of the first 50 elements with the last 50 elements
+    for (i = 0; i < 50; i++) {
+        my_string_swap(string_array[i], string_array[99 - i]);
+    }
+
+    // Destroy every element of the array, printing each one before deletion
+    for (i = 0; i < 100; i++) {
+        if (string_array[i] != NULL) {
+            my_string_insertion(string_array[i], stdout); // Assuming you have a function for insertion
+            printf("\n"); // For better readability
+            my_string_destroy(&string_array[i]);
+        }
+    }
 
     return 0;
 }

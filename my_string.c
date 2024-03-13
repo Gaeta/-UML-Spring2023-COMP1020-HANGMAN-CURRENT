@@ -266,3 +266,86 @@ bool my_string_empty(MY_STRING hMy_string){
     }
 }
 
+Status my_string_assignment(MY_STRING* hLeft, MY_STRING hRight) {
+    if (hLeft == NULL || hRight == NULL) {
+        return FAILURE; // Check for invalid input
+    }
+
+    // If *hLeft is NULL, create a new object
+    if (*hLeft == NULL) {
+        *hLeft = my_string_init_default();
+        if (*hLeft == NULL) {
+            return FAILURE; // Memory allocation failed
+        }
+    }
+
+    // Resize *hLeft if it doesn't have enough capacity to hold hRight's data
+    if ((*hLeft)->capacity < hRight->size) {
+        char* temp = (char*)realloc((*hLeft)->data, sizeof(char) * hRight->size);
+        if (temp == NULL) {
+            return FAILURE; // Memory reallocation failed
+        }
+        (*hLeft)->data = temp;
+        (*hLeft)->capacity = hRight->size;
+    }
+
+    // Copy data from hRight to *hLeft
+    for (int i = 0; i < hRight->size; i++) {
+        (*hLeft)->data[i] = hRight->data[i];
+    }
+    (*hLeft)->size = hRight->size; // Set the size of *hLeft to match hRight
+
+    return SUCCESS;
+}
+
+MY_STRING my_string_init_copy(MY_STRING hMy_string) {
+    if (hMy_string == NULL) {
+        return NULL; // Check for invalid input
+    }
+
+    // Create a new MY_STRING object
+    MY_STRING hCopy = my_string_init_default();
+    if (hCopy == NULL) {
+        return NULL; // Memory allocation failed
+    }
+
+    // Ensure the new object has enough capacity to hold the data
+    if (hCopy->capacity < hMy_string->size) {
+        char* temp = (char*)realloc(hCopy->data, sizeof(char) * hMy_string->size);
+        if (temp == NULL) {
+            my_string_destroy(&hCopy); // Cleanup and return NULL on failure
+            return NULL;
+        }
+        hCopy->data = temp;
+        hCopy->capacity = hMy_string->size;
+    }
+
+    // Copy data from hMy_string to hCopy
+    for (int i = 0; i < hMy_string->size; i++) {
+        hCopy->data[i] = hMy_string->data[i];
+    }
+    hCopy->size = hMy_string->size; // Set the size of hCopy to match hMy_string
+
+    return hCopy; // Return the handle to the new copy
+}
+
+void my_string_swap(MY_STRING hLeft, MY_STRING hRight) {
+    if (hLeft == NULL || hRight == NULL) {
+        return; // Check for invalid input
+    }
+
+    // Swap the size and capacity
+    int tempSize = hLeft->size;
+    hLeft->size = hRight->size;
+    hRight->size = tempSize;
+
+    int tempCapacity = hLeft->capacity;
+    hLeft->capacity = hRight->capacity;
+    hRight->capacity = tempCapacity;
+
+    // Swap the data pointers
+    char* tempData = hLeft->data;
+    hLeft->data = hRight->data;
+    hRight->data = tempData;
+}
+

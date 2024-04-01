@@ -1,7 +1,7 @@
 # Evil_hangman
 Evil hangman game in language C.
 
-Finial Code Lab 8
+Finial Code Lab 8 No more pushs will be made to this repo.
 
 Shit works idk
 

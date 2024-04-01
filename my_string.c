@@ -1,351 +1,345 @@
-#include <string.h> // for strcpy and strlen
-#include <ctype.h> // for isspace
-#include <stdio.h> // for fgetc, ungetc, and fwrite 
-#include <stdlib.h> // for malloc, free, and realloc
-#include <stdbool.h> // for bool, true, and false   
+#include <stdio.h>
+#include <stdlib.h>
 #include "my_string.h"
 
 
-typedef struct My_string {
-    int size;
-    int capacity;
-    char* data;
-} My_string;
-
-MY_STRING my_string_init_default(void) {
-    My_string* pString = malloc(sizeof(My_string));
-    if (!pString) return NULL;
-
-    pString->size = 0;
-    pString->capacity = 7; // default capacity
-    pString->data = malloc(sizeof(char) * pString->capacity);
-    if (!pString->data) {
-        free(pString);
-        return NULL;
+MY_STRING my_string_init_default(void)
+{
+    String* pString = (String*) malloc(sizeof(String));
+    if(pString != NULL)
+    {
+        pString->size = 0;
+        pString->capacity = 7;
+        pString->data = (char*) malloc(sizeof(char) * pString->capacity);
+        if(pString->data == NULL)
+        {
+            free(pString);
+            return NULL;
+        }
     }
-    pString->data[0] = '\0'; // initializes to empty string
-    return (MY_STRING)pString;
+    return pString;
 }
 
-MY_STRING my_string_init_c_string(const char* c_string) {
-    if (!c_string) return NULL; // handle NULL input
-
-    int length = strlen(c_string);
-    My_string* pString = malloc(sizeof(My_string));
-    if (!pString) return NULL;
-
-    pString->capacity = length + 1; // plus null terminator
-    pString->size = length;
-    pString->data = malloc(sizeof(char) * pString->capacity);
-    if (!pString->data) {
-        free(pString);
-        return NULL;
-    }
-    strcpy(pString->data, c_string);
-    return (MY_STRING)pString;
-}
-
-void my_string_destroy(MY_STRING* phMy_string) {
-    if (phMy_string && *phMy_string) {
-        My_string* pString = (My_string*)*phMy_string;
-        free(pString->data);
-        free(pString);
-        *phMy_string = NULL;
+void my_string_destroy(ITEM* phItem)
+{
+    String* pItem = (String*)*phItem;
+    
+    if(pItem != NULL)
+    {
+        free(pItem->data);
+        free(pItem);
+        *phItem = NULL;
     }
 }
 
-int my_string_get_capacity(MY_STRING hMy_string) {
-    if (!hMy_string) return 0;
-    My_string* pString = (My_string*)hMy_string;
+MY_STRING my_string_init_c_string(const char* c_string)
+{
+    int size = 0;
+    while(c_string[size] != 0)
+    {
+        size++;
+    }
+    
+    String* pString = (String*)malloc(sizeof(String));
+    if(pString != NULL)
+    {
+        pString->size = size;
+        pString->capacity = size+1;
+        pString->data = (char*)malloc(sizeof(char) * pString->capacity);
+        if(pString->data == NULL)
+        {
+            free(pString);
+            return NULL;
+        }
+    }
+    for(int i = 0; i <= pString->size; i++)
+    {
+        pString->data[i] = c_string[i];
+    }
+    
+    return pString;
+}
+
+int my_string_get_capacity(MY_STRING hMy_string)
+{
+    String* pString = (String*) hMy_string;
     return pString->capacity;
 }
 
-int my_string_get_size(MY_STRING hMy_string) {
-    if (!hMy_string) return 0;
-    My_string* pString = (My_string*)hMy_string;
+int my_string_get_size(MY_STRING hMy_string)
+{
+    String* pString = (String*)hMy_string;
     return pString->size;
 }
 
-int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string) {
-    if (!hLeft_string || !hRight_string) return 0;
-
-    My_string* pLeft = (My_string*)hLeft_string;
-    My_string* pRight = (My_string*)hRight_string;
-
-    return strcmp(pLeft->data, pRight->data);
-}
-
-Status my_string_extraction(MY_STRING hMy_string, FILE* fp) {
-    My_string* pString = (My_string*)hMy_string;
-    int ch;
-    int readChars = 0;
-
-    pString->size = 0; // reset size to 0
-
-    // printf("-C Read %d characters\n", readChars);
-
-    while(isspace(ch = fgetc(fp)) && ch != EOF); // skip leading whitespace
-
-    // printf("-B Read %d characters\n", readChars);
-
-    // printf("ch: %c : EOF?: %s\n", ch, ch == EOF ? "yes" : "no");
-    if (ch == EOF) return FAILURE; // no characters to read
-    // printf("-A Read %d characters\n", readChars);
-
-    if (ch != EOF && !isspace(ch)) {
-        pString->data[pString->size++] = ch;
-        readChars++;
-    }
+void my_string_increase_capacity(MY_STRING hMy_string)
+{
+    String* pMy_string = (String*) hMy_string;
+    char* temp;
+    int i;
     
-    // printf("A Read %d characters\n", readChars);
-
-    while(((ch = fgetc(fp)) != EOF && !isspace(ch))) {
-        if (pString->size >= pString->capacity) {
-            pString->capacity *= 2;
-            char* temp = realloc(pString->data, pString->capacity);
-
-            pString->data = temp;
+    temp = (char*) malloc(sizeof(char)* pMy_string->capacity * 2);
+    if(temp != NULL)
+    {
+        for(i = 0; i < pMy_string->size; i++)
+        {
+            temp[i] = pMy_string->data[i];
         }
-
-        pString->data[pString->size++] = ch;
-
-        readChars++;
-
     }
-
-    // printf("B Read %d characters\n", readChars);
-
-    if(isspace(ch)) {
-        ungetc(ch, fp);
-    }
-
-    // printf("C Read %d characters\n", readChars);
-
-    pString->data[pString->size] = '\0'; // null-terminate the string
-
-    // printf("D Read %d characters\n", readChars);
-    // printf("E readchars (%d) > 0 (S/F): %d\n", readChars, readChars > 0 ? SUCCESS : FAILURE);
-    return readChars > 0 ? SUCCESS : FAILURE;
+    free(pMy_string->data);
+    pMy_string->data = temp;
+    pMy_string->capacity *= 2;
 }
 
-// Simplified my_string_insertion function
-Status my_string_insertion(MY_STRING hMy_string, FILE* fp) {
-    My_string* pString = (My_string*)hMy_string;
-
-    // Write the string data to the file
-    int written = fwrite(pString->data, sizeof(char), pString->size, fp);
-
-    if (written < pString->size) 
-        return FAILURE;
+int my_string_compare(MY_STRING hLeft_string, MY_STRING hRight_string)
+{
+    String* pLeft = (String*)hLeft_string;
+    String* pRight = (String*)hRight_string;
+    int i;
     
+    for (i = 0; i < pLeft->size && i < pRight->size; i++)
+    {
+        if (pLeft->data[i] < pRight->data[i]) {
+            return -1;
+        }
+        else if (pLeft->data[i] > pRight->data[i]) {
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+Status my_string_extraction(MY_STRING hMy_string, FILE* fp)
+{
+    String* pString = (String*)hMy_string;
+    if(fp == NULL)
+    {
+        return FAILURE;
+    }
+    
+    pString->size = 0;
+    char ch;
+    
+    if(fscanf(fp," %c",&ch) != EOF)
+    {
+        while(ch != ' ' && ch != '\n' && ch != '\t')
+        {
+            if(pString->size >= pString->capacity)
+            {
+                my_string_increase_capacity(pString);
+            }
+            pString->data[pString->size] = ch;
+            pString->size++;
+            ch = fgetc(fp);
+        }
+    }
+    else
+    {
+        return FAILURE;
+    }
+    
+    if(pString->size != 0)
+    {
+        return SUCCESS;
+    }
+    return FAILURE;
+    
+}
+
+Status my_string_insertion(MY_STRING hMy_string, FILE* fp)
+{
+    String* pMy_string = (String*)hMy_string;
+    if(pMy_string->size == 0)
+    {
+        return FAILURE;
+    }
+    
+    for(int i = 0; i < pMy_string->size; i++)
+    {
+        fputc(pMy_string->data[i],fp);
+    }
     return SUCCESS;
 }
 
-Status my_string_push_back(MY_STRING hMy_string, char item){
-    My_string* pMy_string = (My_string*)hMy_string;
-    char* pTemp;
+Status my_string_push_back(MY_STRING hMy_string, char item)
+{
+    String* pString = (String*) hMy_string;
+    char* temp;
     int i;
-    if(hMy_string == NULL){
-        return FAILURE;
-    }
-
-    if(pMy_string->size >= pMy_string->capacity){
-        pTemp = (char*)malloc(sizeof(char) * pMy_string->capacity * 2);
-        if (pTemp == NULL){
-            printf("Failed to resize for push_back.\n");
+    
+    if(pString->size >= pString->capacity)
+    {
+        temp = (char*) malloc(sizeof(char)* pString->capacity * 2);
+        if(temp == NULL)
+        {
+            free(temp);
             return FAILURE;
         }
-        for(i = 0; i < pMy_string->size; i++){
-            pTemp[i] = pMy_string->data[i];
+        for(i = 0; i < pString->size; i++)
+        {
+            temp[i] = pString->data[i];
         }
-        free(pMy_string->data);
-        pMy_string->data = pTemp;
+        free(pString->data);
+        pString->data = temp;
+        pString->capacity *= 2;
+    }
+    pString->data[pString->size] = item;
+    pString->size++;
+    return SUCCESS;
+}
+
+Status my_string_pop_back(MY_STRING hMy_string)
+{
+    String* pString = (String*) hMy_string;
+    
+    if(pString->size == 0)
+    {
+        return FAILURE;
+    }
+    pString->size--;
+    return SUCCESS;
+}
+
+char* my_string_at(MY_STRING hMy_string, int index)
+{
+    String* pString = (String*) hMy_string;
+    
+    if(index >= pString->size)
+    {
+        return NULL;
+    }
+    return &(pString->data[index]);
+}
+
+char* my_string_c_str(MY_STRING hMy_string)
+{
+    /*
+    String* pString = (String*)hMy_string;
+    pString->data[pString->size] = '\0';
+    return pString->data;
+     */
+    char* tempArray;
+    int i;
+    String* pMy_string = (String*)hMy_string;
+    if (pMy_string->size + 1 > pMy_string->capacity) { //resize
+        tempArray = (char*)malloc(sizeof(char) * 2 * pMy_string->capacity);
+        if (tempArray == NULL) {
+            free(tempArray);
+            return tempArray;
+        }
+        for (i = 0; i < pMy_string->capacity; i++) {
+            tempArray[i] = pMy_string->data[i];
+        }
+        free(pMy_string->data); pMy_string->data = NULL;
+        pMy_string->data = tempArray;
+        tempArray = NULL;
         pMy_string->capacity *= 2;
     }
-    pMy_string->data[pMy_string->size] = item;
-    pMy_string->size++;
-    return SUCCESS;
-}
-
-Status my_string_pop_back(MY_STRING hMy_string){
-    My_string* pMy_string = (My_string*)hMy_string;
-  
-    if(hMy_string == NULL){
-        return FAILURE;
-    }
-
-    if(pMy_string->size <= 0){
-        return FAILURE;
-    }
-    pMy_string->size--;
-    pMy_string->data[pMy_string->size] = '\0';
-    return SUCCESS;
-}
-
-char* my_string_at(MY_STRING hMy_string, int index){
-    My_string* pMy_string = (My_string*)hMy_string;
-
-    if(hMy_string == NULL){
-        return NULL;
-    }
-
-    if(index < 0 || index >= pMy_string->size){
-        return NULL;
-    }
-
-    return &(pMy_string->data[index]);
-}
-
-char* my_string_c_str(MY_STRING hMy_string){
-    My_string* pMy_string = (My_string*) hMy_string;
-    char* pTemp;
-    int i;
-
-    if(hMy_string == NULL){
-        return NULL;
-    }
-    if(pMy_string->size >= pMy_string->capacity){
-        pTemp = (char*)malloc(sizeof(char) * pMy_string->capacity + 1);
-        if(pTemp == NULL){
-            printf("Failed to make space for c_str.\n");
-            return NULL;
-        }
-        for(i = 0; i < pMy_string->size; i++){
-            pTemp[i] = pMy_string->data[i];
-        }
-        free(pMy_string->data);
-        pMy_string->data = pTemp;
-        pMy_string->capacity ++;
-    }
-
     pMy_string->data[pMy_string->size] = '\0';
     return pMy_string->data;
 }
 
-Status my_string_concat(MY_STRING hResult, MY_STRING hAppend){
-    My_string* pResult = (My_string*)hResult;
-    My_string* pAppend = (My_string*)hAppend;
-
-    if(hResult == NULL || hAppend == NULL){
-        return FAILURE;
-    }
-
-    char* pTemp;
+Status my_string_concat(MY_STRING hResult, MY_STRING hAppend)
+{
+    String* pString = (String*) hResult;
+    String* pAppend = (String*) hAppend;
+    char* temp;
     int i;
-    int combined_capacity = pResult->capacity + pAppend->capacity;
-
-    if((pResult->size + pAppend->size) >= pResult->capacity){
-        pTemp = malloc(sizeof(char) * combined_capacity * 2);
-        if(pTemp == NULL){
+    
+    if(pAppend->size >= 0)
+    {
+        temp = (char*) malloc(sizeof(char)* pString->capacity * 2);
+        if(temp == NULL)
+        {
             return FAILURE;
         }
-        for(i = 0; i < pResult->size; i++){
-            pTemp[i] = pResult->data[i];
+        for( i = 0; i < pAppend->size; i++)
+        {
+            temp[i] = pAppend->data[i];
+            my_string_push_back(pString, temp[i]);
         }
-        free(pResult->data);
-        pResult->data = pTemp;
-        pResult->capacity = combined_capacity * 2;
+        free(temp);
+        return SUCCESS;
     }
+    return FAILURE;
+}
 
-    for(i = pResult->size; i < (pResult->size + pAppend->size); i++){
-        pResult->data[i] = pAppend->data[i - pResult->size];
+Boolean my_string_empty(MY_STRING hMy_string)
+{
+    String* pString = (String*) hMy_string;
+    
+    return (Boolean)(pString->size == 0);
+}
+
+Status my_string_assignment(ITEM* phLeft, ITEM hRight)
+{
+    /*
+    String* pLeft = (String*)*phLeft;
+    String* pRight = (String*)hRight;
+    int i;
+    
+    if(pLeft == NULL)
+    {
+        pLeft = my_string_init_default();
+        if(pLeft == NULL)
+        {
+            return FAILURE;
+        }
     }
-    pResult->size += pAppend->size;
+    
+    for(i = 0; i < pLeft->size; i++)
+    {
+        my_string_pop_back(pLeft);
+    }
+    
+    for(i = 0; i < pRight->size; i++)
+    {
+        my_string_push_back(pLeft, pRight->data[i]);
+    }
+    
+    *phLeft = pLeft;
+    
+    return SUCCESS;
+     */
+    String* pMy_string_left = (String*)*phLeft;
+    String* pMy_string_right = (String*)hRight;
+    int i;
+    const char* temp;
+    
+    temp = my_string_c_str((MY_STRING)hRight);
+    
+    if (pMy_string_left == NULL) {
+        pMy_string_left = my_string_init_c_string(temp);
+    }
+    else {
+        pMy_string_left->size = 0;
+        for (i = 0; i < pMy_string_right->size + 1; i++) {
+            my_string_push_back(pMy_string_left, pMy_string_right->data[i]);
+        }
+    }
+    *phLeft = pMy_string_left;
 
     return SUCCESS;
 }
 
-bool my_string_empty(MY_STRING hMy_string){
-    My_string* pMy_string = (My_string*)hMy_string;
+Status get_word_key_value(MY_STRING current_word_family, MY_STRING new_key, MY_STRING word, char guess)
+{
+    String* pNew_key = (String*)new_key;
+    String* pWord = (String*)word;
+    int i;
 
-    if(pMy_string->size == 0){
-        return true;
-    }
-    else{
-        return false;
-    }
-}
-
-Status my_string_assignment(MY_STRING* hLeft, MY_STRING hRight) {
-    if (hLeft == NULL || hRight == NULL) {
-        return FAILURE; // Check for invalid input
-    }
-
-    // If *hLeft is NULL, create a new object
-    if (*hLeft == NULL) {
-        *hLeft = my_string_init_default();
-        if (*hLeft == NULL) {
-            return FAILURE; // Memory allocation failed
+    guess = tolower(guess);
+    
+    my_string_assignment(&new_key, current_word_family);
+    
+    for(i = 0; i < pWord->size; i++)
+    {
+        if(pWord->data[i] == guess)
+        {
+            pNew_key->data[i] = guess;
         }
     }
-
-    // Resize *hLeft if it doesn't have enough capacity to hold hRight's data
-    if ((*hLeft)->capacity < hRight->size) {
-        char* temp = (char*)realloc((*hLeft)->data, sizeof(char) * hRight->size);
-        if (temp == NULL) {
-            return FAILURE; // Memory reallocation failed
-        }
-        (*hLeft)->data = temp;
-        (*hLeft)->capacity = hRight->size;
-    }
-
-    // Copy data from hRight to *hLeft
-    for (int i = 0; i < hRight->size; i++) {
-        (*hLeft)->data[i] = hRight->data[i];
-    }
-    (*hLeft)->size = hRight->size; // Set the size of *hLeft to match hRight
-
+    
     return SUCCESS;
 }
-
-MY_STRING my_string_init_copy(MY_STRING hMy_string) {
-    if (hMy_string == NULL) {
-        return NULL; // Check for invalid input
-    }
-
-    // Create a new MY_STRING object
-    MY_STRING hCopy = my_string_init_default();
-    if (hCopy == NULL) {
-        return NULL; // Memory allocation failed
-    }
-
-    // Ensure the new object has enough capacity to hold the data
-    if (hCopy->capacity < hMy_string->size) {
-        char* temp = (char*)realloc(hCopy->data, sizeof(char) * hMy_string->size);
-        if (temp == NULL) {
-            my_string_destroy(&hCopy); // Cleanup and return NULL on failure
-            return NULL;
-        }
-        hCopy->data = temp;
-        hCopy->capacity = hMy_string->size;
-    }
-
-    // Copy data from hMy_string to hCopy
-    for (int i = 0; i < hMy_string->size; i++) {
-        hCopy->data[i] = hMy_string->data[i];
-    }
-    hCopy->size = hMy_string->size; // Set the size of hCopy to match hMy_string
-
-    return hCopy; // Return the handle to the new copy
-}
-
-void my_string_swap(MY_STRING hLeft, MY_STRING hRight) {
-    if (hLeft == NULL || hRight == NULL) {
-        return; // Check for invalid input
-    }
-
-    // Swap the size and capacity
-    int tempSize = hLeft->size;
-    hLeft->size = hRight->size;
-    hRight->size = tempSize;
-
-    int tempCapacity = hLeft->capacity;
-    hLeft->capacity = hRight->capacity;
-    hRight->capacity = tempCapacity;
-
-    // Swap the data pointers
-    char* tempData = hLeft->data;
-    hLeft->data = hRight->data;
-    hRight->data = tempData;
-}
-
